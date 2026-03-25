@@ -21,7 +21,8 @@ public partial class KennelWindow : Window
     public static double ExpandedWidth { get; } = 260;
     // Keep it rectangular/side-ish: fixed height, grow width only as needed.
     // Higher than before so we don't force everything into a single long row.
-    public static double ExpandedHeight { get; } = 170;
+    // Expanded height must not grow vertically (horizontal expansion only).
+    public static double ExpandedHeight { get; } = 96;
 
     private readonly KennelDefinition _kennel;
     private readonly KennelStorage _storage;
@@ -286,14 +287,9 @@ public partial class KennelWindow : Window
 
                 Width = high;
 
-                // If it still doesn't fit even at the hard max width,
-                // allow height to grow a bit (no scrolling) so content is still visible.
-                var finalDesiredHeight = MeasureDesiredHeight(Width);
-                var appliedHeight = ExpandedHeight;
-                if (!double.IsNaN(finalDesiredHeight) && finalDesiredHeight > ExpandedHeight + 1)
-                    appliedHeight = Math.Min(finalDesiredHeight, ExpandedHeight + 120);
-
-                Height = appliedHeight;
+                // Always keep Height fixed (no tall box). If it doesn't fit, it will wrap
+                // into more rows; we do not increase Height and we keep scrollbars disabled.
+                Height = ExpandedHeight;
                 UpdateLayout();
             }
 

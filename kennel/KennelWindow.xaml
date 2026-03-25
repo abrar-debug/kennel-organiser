@@ -77,19 +77,19 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" ItemWidth="92" ItemHeight="70" />
+                            <WrapPanel Orientation="Horizontal" ItemWidth="92" ItemHeight="58" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Vertical"
                                         HorizontalAlignment="Center"
-                                        Margin="0,0,0,6"
+                                        Margin="0"
                                         ToolTip="{Binding DisplayName}">
                                 <Image Source="{Binding Icon}"
                                        Width="26"
                                        Height="26"
-                                       Margin="0,0,0,4"
+                                       Margin="0,0,0,2"
                                        Stretch="Uniform" />
                                 <TextBlock Text="{Binding DisplayName}"
                                            Foreground="White"
