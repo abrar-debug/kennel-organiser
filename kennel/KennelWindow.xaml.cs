@@ -17,12 +17,9 @@ namespace kennel;
 public partial class KennelWindow : Window
 {
     public static double CollapsedWidth { get; } = 96;
-    public static double CollapsedHeight { get; } = 96;
+    public static double CollapsedHeight { get; } = 64;
     public static double ExpandedWidth { get; } = 260;
-    // Keep it rectangular/side-ish: fixed height, grow width only as needed.
-    // Higher than before so we don't force everything into a single long row.
-    // Expanded height must not grow vertically (horizontal expansion only).
-    public static double ExpandedHeight { get; } = 96;
+    public static double ExpandedHeight { get; } = 64;
 
     private readonly KennelDefinition _kennel;
     private readonly KennelStorage _storage;
@@ -44,6 +41,7 @@ public partial class KennelWindow : Window
         InitializeComponent();
 
         KennelNameText.Text = _kennel.Name;
+        KennelNameExpandedText.Text = _kennel.Name;
         RefreshList();
         SetCollapsed(true);
     }
@@ -64,7 +62,7 @@ public partial class KennelWindow : Window
             : (_kennel.Shortcuts.Count == 0 ? Visibility.Visible : Visibility.Collapsed);
 
         if (!_isCollapsed)
-            AdjustExpandedWidthToContent();
+            AdjustExpandedWidth();
     }
 
     private IEnumerable<ShortcutItem> BuildShortcutItems()
@@ -128,9 +126,6 @@ public partial class KennelWindow : Window
             if (_isCollapsed)
                 SetCollapsed(false);
 
-            // Show drop hint while hovering.
-            DropHintText.Visibility = Visibility.Visible;
-
             RootBorder.Background = new SolidColorBrush(Color.FromArgb(0x33, 0x00, 0x00, 0x00));
             RootBorder.BorderBrush = new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0x00, 0x00));
         }
@@ -140,7 +135,6 @@ public partial class KennelWindow : Window
     {
         RootBorder.Background = new SolidColorBrush(Color.FromArgb(0x22, 0x00, 0x00, 0x00));
         RootBorder.BorderBrush = new SolidColorBrush(Color.FromArgb(0x33, 0x00, 0x00, 0x00));
-        DropHintText.Visibility = Visibility.Collapsed;
     }
 
     private void KennelWindow_Drop(object sender, DragEventArgs e)
@@ -199,116 +193,51 @@ public partial class KennelWindow : Window
     {
         _isCollapsed = collapsed;
 
-        Width = collapsed ? CollapsedWidth : ExpandedWidth;
+        KennelNameText.Visibility = collapsed ? Visibility.Visible   : Visibility.Collapsed;
+        ExpandedPanel.Visibility  = collapsed ? Visibility.Collapsed : Visibility.Visible;
+
+        Width  = collapsed ? CollapsedWidth  : ExpandedWidth;
         Height = collapsed ? CollapsedHeight : ExpandedHeight;
 
-        // Collapse the content row entirely.
-        if (KennelLayoutGrid.RowDefinitions.Count >= 2)
-        {
-            KennelLayoutGrid.RowDefinitions[1].Height = collapsed
-                ? new GridLength(0)
-                : GridLength.Auto;
-        }
-
-        ShortcutsList.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
-        DropHintText.Visibility = Visibility.Collapsed;
-
-        // Make the header fully rounded when collapsed like a desktop icon.
-        HeaderBorder.CornerRadius = collapsed ? new CornerRadius(12) : new CornerRadius(12);
-
         RefreshList();
+
         if (!collapsed)
-            AdjustExpandedWidthToContent();
+            AdjustExpandedWidth();
     }
 
-    private void AdjustExpandedWidthToContent()
+    private void AdjustExpandedWidth()
     {
         try
         {
-            // We keep the expanded height fixed. To avoid excessive width,
-            // we find the *minimal* width where the unbounded desired height fits inside `ExpandedHeight`.
-            var maxHeight = ExpandedHeight;
-            var minWidth = Math.Max(ExpandedWidth, Width);
+            // Icons use a non-wrapping horizontal StackPanel so width is simple arithmetic:
+            //   name column + (icon count × per-icon width) + column padding
+            const double nameColWidth = 100; // MinWidth 80 + 10px padding each side
+            const double perItemWidth = 80;  // icon 26 + label 62 + 12px margin
+            const double iconsPad     = 20;  // left/right margins of the icons area
+
+            var count = _kennel.Shortcuts.Count;
+            var iconsWidth = count > 0
+                ? count * perItemWidth + iconsPad
+                : 130; // room for "drop here" hint
+
+            var target = Math.Max(ExpandedWidth, nameColWidth + iconsWidth);
 
             var workArea = SystemParameters.WorkArea;
-            var maxAllowedWidth = (workArea.Left + workArea.Width) - workArea.Left - 40; // leave a small margin
-            maxAllowedWidth = Math.Max(maxAllowedWidth, minWidth);
+            target = Math.Min(target, workArea.Width - 40);
 
-            // Hard cap to prevent taking up too much horizontal screen space.
-            var hardMaxWidth = Math.Min(maxAllowedWidth, 640);
+            Width  = target;
+            Height = ExpandedHeight;
 
-            double MeasureDesiredHeight(double candidateWidth)
-            {
-                Width = candidateWidth;
-                Height = 10_000; // unbounded measurement
-                UpdateLayout();
-                var desired = RootBorder.DesiredSize.Height;
-                return desired;
-            }
-
-            // If default width already fits, we're done.
-            var desiredAtMin = MeasureDesiredHeight(minWidth);
-            if (!double.IsNaN(desiredAtMin) && desiredAtMin <= maxHeight + 1)
-            {
-                Width = minWidth;
-                Height = ExpandedHeight;
-                UpdateLayout();
-            }
-            else
-            {
-                // Find an upper bound where it fits (or we hit hard max).
-                var low = minWidth;
-                var high = minWidth;
-
-                var step = 60.0;
-                while (high < hardMaxWidth)
-                {
-                    var next = Math.Min(hardMaxWidth, high + step);
-                    var desired = MeasureDesiredHeight(next);
-                    if (!double.IsNaN(desired) && desired <= maxHeight + 1)
-                    {
-                        high = next;
-                        break;
-                    }
-                    high = next;
-                }
-
-                // Binary search between `low` and `high` for the minimal width that fits.
-                // If it never fits, `high` will be hardMaxWidth.
-                for (var i = 0; i < 14; i++)
-                {
-                    var mid = (low + high) / 2.0;
-                    var desired = MeasureDesiredHeight(mid);
-                    if (!double.IsNaN(desired) && desired <= maxHeight + 1)
-                        high = mid;
-                    else
-                        low = mid;
-                }
-
-                Width = high;
-
-                // Always keep Height fixed (no tall box). If it doesn't fit, it will wrap
-                // into more rows; we do not increase Height and we keep scrollbars disabled.
-                Height = ExpandedHeight;
-                UpdateLayout();
-            }
-
-            // Keep within the visible work area as best as possible.
-            var maxLeft = workArea.Left + workArea.Width - Width;
-            if (Left < workArea.Left)
-                Left = workArea.Left;
-            else if (Left > maxLeft)
-                Left = maxLeft;
-
-            if (Top < workArea.Top)
-                Top = workArea.Top;
-            else if (Top + Height > workArea.Top + workArea.Height)
+            if (Left + Width > workArea.Left + workArea.Width)
+                Left = workArea.Left + workArea.Width - Width;
+            if (Left < workArea.Left) Left = workArea.Left;
+            if (Top  < workArea.Top)  Top  = workArea.Top;
+            if (Top + Height > workArea.Top + workArea.Height)
                 Top = workArea.Top + workArea.Height - Height;
         }
         catch
         {
-            // If measurement fails for any reason, keep default expanded size.
-            Width = ExpandedWidth;
+            Width  = ExpandedWidth;
             Height = ExpandedHeight;
         }
     }

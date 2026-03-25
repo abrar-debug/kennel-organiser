@@ -8,9 +8,8 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
-        x:Name="KennelRoot"
         Width="96"
-        Height="96"
+        Height="64"
         AllowDrop="True"
         DragEnter="KennelWindow_DragEnter"
         DragLeave="KennelWindow_DragLeave"
@@ -20,91 +19,102 @@
             Background="#22000000"
             BorderBrush="#33000000"
             BorderThickness="1">
-        <Grid x:Name="KennelLayoutGrid">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
 
-            <!-- Header: drag to move -->
-            <Border x:Name="HeaderBorder"
-                    Grid.Row="0"
-                    Background="#11000000"
-                    BorderBrush="#33000000"
-                    BorderThickness="0,0,0,1"
-                    Padding="8"
-                    CornerRadius="12,12,0,0"
-                    MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown"
-                    MouseMove="HeaderBorder_MouseMove"
-                    MouseLeftButtonUp="HeaderBorder_MouseLeftButtonUp">
-                <DockPanel LastChildFill="True">
-                    <TextBlock x:Name="KennelNameText"
-                               DockPanel.Dock="Left"
+        <!-- Whole surface is draggable -->
+        <Grid MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown"
+              MouseMove="HeaderBorder_MouseMove"
+              MouseLeftButtonUp="HeaderBorder_MouseLeftButtonUp">
+
+            <!-- ── COLLAPSED VIEW: name centered ── -->
+            <TextBlock x:Name="KennelNameText"
+                       Foreground="White"
+                       FontWeight="SemiBold"
+                       FontSize="13"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="10"
+                       Visibility="Visible" />
+
+            <!-- ── EXPANDED VIEW: name left | divider | icons right ── -->
+            <DockPanel x:Name="ExpandedPanel"
+                       Visibility="Collapsed"
+                       LastChildFill="True">
+
+                <!-- Name column -->
+                <Border DockPanel.Dock="Left"
+                        BorderBrush="#44FFFFFF"
+                        BorderThickness="0,0,1,0"
+                        MinWidth="80"
+                        Padding="10,0">
+                    <TextBlock x:Name="KennelNameExpandedText"
                                Foreground="White"
                                FontWeight="SemiBold"
-                               Text="Kennel"
-                               TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center" />
+                               FontSize="13"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="90" />
+                </Border>
 
-                    <TextBlock x:Name="DropHintText"
-                               DockPanel.Dock="Right"
-                               Foreground="#66FFFFFF"
+                <!-- Icons column -->
+                <StackPanel VerticalAlignment="Center"
+                            Orientation="Vertical"
+                            Margin="8,0">
+                    <TextBlock x:Name="EmptyHintText"
+                               Foreground="#77FFFFFF"
                                FontSize="11"
-                               Text=".lnk drop" />
-                </DockPanel>
-            </Border>
+                               Text="Drop .lnk files here"
+                               Visibility="Collapsed"
+                               HorizontalAlignment="Center" />
 
-            <Grid Grid.Row="1" Margin="10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+                    <ListBox x:Name="ShortcutsList"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             MouseDoubleClick="ShortcutsList_MouseDoubleClick"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical"
+                                            HorizontalAlignment="Center"
+                                            Margin="6,0"
+                                            ToolTip="{Binding DisplayName}">
+                                    <Image Source="{Binding Icon}"
+                                           Width="26"
+                                           Height="26"
+                                           Margin="0,0,0,3"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               Foreground="White"
+                                               FontSize="11"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               Width="62" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </DockPanel>
 
-                <TextBlock x:Name="EmptyHintText"
-                           Grid.Row="0"
-                           Foreground="#66FFFFFF"
-                           FontSize="12"
-                           Text="Drag app shortcuts (.lnk) here"
-                           Visibility="Collapsed"
-                           Margin="0,0,0,8" />
-
-                <ListBox x:Name="ShortcutsList"
-                         Grid.Row="1"
-                         Background="#00000000"
-                         BorderThickness="0"
-                         MouseDoubleClick="ShortcutsList_MouseDoubleClick"
-                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" ItemWidth="92" ItemHeight="58" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Vertical"
-                                        HorizontalAlignment="Center"
-                                        Margin="0"
-                                        ToolTip="{Binding DisplayName}">
-                                <Image Source="{Binding Icon}"
-                                       Width="26"
-                                       Height="26"
-                                       Margin="0,0,0,2"
-                                       Stretch="Uniform" />
-                                <TextBlock Text="{Binding DisplayName}"
-                                           Foreground="White"
-                                           FontSize="12"
-                                           HorizontalAlignment="Center"
-                                           TextAlignment="Center"
-                                           TextWrapping="NoWrap"
-                                           TextTrimming="CharacterEllipsis"
-                                           Width="80" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
         </Grid>
     </Border>
 </Window>
-
