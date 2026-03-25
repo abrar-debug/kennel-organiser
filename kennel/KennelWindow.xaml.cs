@@ -70,6 +70,9 @@ public partial class KennelWindow : Window
 
         // Pin to desktop Z-order once the HWND is available.
         Loaded += (_, _) => PinToDesktop();
+
+        MouseEnter += (_, _) => { if (_isCollapsed) SetCollapsed(false); };
+        MouseLeave += (_, _) => { if (!_isCollapsed) SetCollapsed(true);  };
     }
 
     private void PinToDesktop()
@@ -329,16 +332,7 @@ public partial class KennelWindow : Window
 
     private void HeaderBorder_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (!_headerMouseDown)
-            return;
-
         _headerMouseDown = false;
-
-        // If we started a drag, don't toggle.
-        if (_headerIsDragging)
-            return;
-
-        SetCollapsed(!_isCollapsed);
     }
 
     private void ShortcutsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
