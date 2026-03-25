@@ -19,10 +19,13 @@ public class ShortcutDefinition
 {
     public string DisplayName { get; set; } = string.Empty;
 
-    // Path to the copied `.lnk` stored by this app.
+    // For .lnk: path to the copied file stored by this app.
+    // For folders: same as OriginalPath (no copy made).
     public string ShortcutPath { get; set; } = string.Empty;
 
     // Original path the user dropped, used for de-duplication within the kennel.
     public string OriginalPath { get; set; } = string.Empty;
+
+    public bool IsFolder { get; set; }
 }
 

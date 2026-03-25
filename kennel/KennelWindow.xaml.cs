@@ -142,7 +142,7 @@ public partial class KennelWindow : Window
         }
     }
 
-    private bool TryGetShortcutFiles(DragEventArgs e, out string[] filePaths)
+    private bool TryGetDroppedPaths(DragEventArgs e, out string[] filePaths)
     {
         filePaths = Array.Empty<string>();
 
@@ -151,14 +151,13 @@ public partial class KennelWindow : Window
 
         var raw = e.Data.GetData(DataFormats.FileDrop);
 
-        // Explorer commonly provides `StringCollection`, but we support common shapes.
         IEnumerable<string>? strings = raw switch
         {
-            string[] arr => arr,
-            StringCollection sc => sc.Cast<string>(),
-            IEnumerable<string> enumerable => enumerable,
-            object[] objArr => objArr.OfType<string>(),
-            _ => null
+            string[] arr              => arr,
+            StringCollection sc       => sc.Cast<string>(),
+            IEnumerable<string> en    => en,
+            object[] objArr           => objArr.OfType<string>(),
+            _                         => null
         };
 
         if (strings == null)
@@ -172,19 +171,20 @@ public partial class KennelWindow : Window
         return filePaths.Length > 0;
     }
 
+    private static bool IsAccepted(string path) =>
+        Directory.Exists(path) ||
+        string.Equals(Path.GetExtension(path), ".lnk", StringComparison.OrdinalIgnoreCase);
+
     private void KennelWindow_DragEnter(object sender, DragEventArgs e)
     {
-        if (!TryGetShortcutFiles(e, out var filePaths))
+        if (!TryGetDroppedPaths(e, out var filePaths))
             return;
 
-        // Always accept `FileDrop` as a drag target so the `Drop` event fires.
         e.Effects = DragDropEffects.Copy;
         e.Handled = true;
 
-        // If it includes any `.lnk` we show the kennel as an active drop target.
-        if (filePaths.Any(p => string.Equals(Path.GetExtension(p), ".lnk", StringComparison.OrdinalIgnoreCase)))
+        if (filePaths.Any(IsAccepted))
         {
-            // Expand so users can see the contents while dropping.
             if (_isCollapsed)
                 SetCollapsed(false);
 
@@ -201,43 +201,54 @@ public partial class KennelWindow : Window
 
     private void KennelWindow_Drop(object sender, DragEventArgs e)
     {
-        if (!TryGetShortcutFiles(e, out var filePaths))
+        if (!TryGetDroppedPaths(e, out var filePaths))
             return;
 
         var changed = false;
 
         foreach (var filePath in filePaths)
         {
-            if (!File.Exists(filePath))
+            if (!IsAccepted(filePath))
                 continue;
 
-            var ext = Path.GetExtension(filePath);
-            if (!string.Equals(ext, ".lnk", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // De-dupe by original dropped path.
             var originalPath = Path.GetFullPath(filePath);
+            var isFolder     = Directory.Exists(originalPath);
+
+            // De-dupe by original path.
             if (_kennel.Shortcuts.Any(s =>
                     string.Equals(s.OriginalPath, originalPath, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
             try
             {
-                var copiedPath = _storage.CopyShortcutToKennel(_kennel.Id, originalPath);
-                var displayName = Path.GetFileNameWithoutExtension(originalPath);
+                string storedPath;
+                if (isFolder)
+                {
+                    // Folders are referenced directly — no copy needed.
+                    storedPath = originalPath;
+                }
+                else
+                {
+                    storedPath = _storage.CopyShortcutToKennel(_kennel.Id, originalPath);
+                }
+
+                var displayName = isFolder
+                    ? Path.GetFileName(originalPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                    : Path.GetFileNameWithoutExtension(originalPath);
 
                 _kennel.Shortcuts.Add(new ShortcutDefinition
                 {
-                    DisplayName = displayName,
-                    ShortcutPath = copiedPath,
-                    OriginalPath = originalPath
+                    DisplayName  = displayName,
+                    ShortcutPath = storedPath,
+                    OriginalPath = originalPath,
+                    IsFolder     = isFolder
                 });
 
                 changed = true;
             }
             catch
             {
-                // Ignore unsupported/corrupt shortcuts or file IO errors.
+                // Ignore IO errors for individual items.
             }
         }
 
@@ -348,21 +359,28 @@ public partial class KennelWindow : Window
         if (ShortcutsList.SelectedItem is not ShortcutItem selected)
             return;
 
-        var shortcutPath = selected.Definition.ShortcutPath;
-        if (string.IsNullOrWhiteSpace(shortcutPath) || !File.Exists(shortcutPath))
+        var path = selected.Definition.ShortcutPath;
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        var exists = selected.Definition.IsFolder
+            ? Directory.Exists(path)
+            : File.Exists(path);
+
+        if (!exists)
             return;
 
         try
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = shortcutPath,
+                FileName        = path,
                 UseShellExecute = true
             });
         }
         catch
         {
-            // Launch failures are ignored for now.
+            // Launch failures are ignored.
         }
     }
 
