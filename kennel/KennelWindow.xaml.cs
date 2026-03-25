@@ -16,7 +16,7 @@ public partial class KennelWindow : Window
     public static double CollapsedWidth { get; } = 96;
     public static double CollapsedHeight { get; } = 96;
     public static double ExpandedWidth { get; } = 260;
-    public static double ExpandedHeight { get; } = 240;
+    public static double ExpandedHeight { get; } = 96; // Side expansion only (no vertical growth)
 
     private readonly KennelDefinition _kennel;
     private readonly KennelStorage _storage;
@@ -178,7 +178,7 @@ public partial class KennelWindow : Window
         DropHintText.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
 
         // Make the header fully rounded when collapsed like a desktop icon.
-        HeaderBorder.CornerRadius = collapsed ? new CornerRadius(12) : new CornerRadius(12, 12, 0, 0);
+        HeaderBorder.CornerRadius = collapsed ? new CornerRadius(12) : new CornerRadius(12);
 
         RefreshList();
     }
