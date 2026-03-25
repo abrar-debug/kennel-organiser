@@ -23,7 +23,7 @@
         <Grid x:Name="KennelLayoutGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Header: drag to move -->
@@ -72,8 +72,37 @@
                          Grid.Row="1"
                          Background="#00000000"
                          BorderThickness="0"
-                         DisplayMemberPath="DisplayName"
-                         MouseDoubleClick="ShortcutsList_MouseDoubleClick" />
+                         MouseDoubleClick="ShortcutsList_MouseDoubleClick"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" ItemWidth="92" ItemHeight="70" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Vertical"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,0,0,6"
+                                        ToolTip="{Binding DisplayName}">
+                                <Image Source="{Binding Icon}"
+                                       Width="26"
+                                       Height="26"
+                                       Margin="0,0,0,4"
+                                       Stretch="Uniform" />
+                                <TextBlock Text="{Binding DisplayName}"
+                                           Foreground="White"
+                                           FontSize="12"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           Width="80" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </Grid>
         </Grid>
     </Border>
