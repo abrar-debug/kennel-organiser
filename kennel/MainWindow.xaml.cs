@@ -61,17 +61,28 @@ public partial class MainWindow : Window
         }
 
         var workArea = SystemParameters.WorkArea;
-        var baseLeft = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 25);
-        var baseTop = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 20);
 
-        // If a kennel was added previously, clamp positions into a reasonable range.
-        var left = Math.Min(baseLeft, workArea.Width - KennelWindow.ExpandedWidth);
-        var top = Math.Min(baseTop, workArea.Height - KennelWindow.ExpandedHeight);
+        double left, top;
+
+        if (kennel.Left.HasValue && kennel.Top.HasValue)
+        {
+            // Restore saved position, clamping back onto the screen in case resolution changed.
+            left = Math.Max(workArea.Left, Math.Min(kennel.Left.Value, workArea.Left + workArea.Width  - KennelWindow.CollapsedWidth));
+            top  = Math.Max(workArea.Top,  Math.Min(kennel.Top.Value,  workArea.Top  + workArea.Height - KennelWindow.CollapsedHeight));
+        }
+        else
+        {
+            // First-time placement: stagger new kennels so they don't stack on top of each other.
+            var baseLeft = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 25);
+            var baseTop  = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 20);
+            left = workArea.Left + Math.Min(baseLeft, workArea.Width  - KennelWindow.ExpandedWidth);
+            top  = workArea.Top  + Math.Min(baseTop,  workArea.Height - KennelWindow.ExpandedHeight);
+        }
 
         var kennelWindow = new KennelWindow(kennel, _storage)
         {
-            Left = workArea.Left + left,
-            Top = workArea.Top + top
+            Left = left,
+            Top  = top
         };
 
         kennelWindow.KennelUpdated += (_, updated) =>

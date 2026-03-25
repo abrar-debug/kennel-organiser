@@ -73,6 +73,14 @@ public partial class KennelWindow : Window
 
         MouseEnter += (_, _) => { if (_isCollapsed) SetCollapsed(false); };
         MouseLeave += (_, _) => { if (!_isCollapsed) SetCollapsed(true);  };
+
+        // Persist position whenever the window is moved.
+        LocationChanged += (_, _) =>
+        {
+            _kennel.Left = Left;
+            _kennel.Top  = Top;
+            KennelUpdated?.Invoke(this, _kennel);
+        };
     }
 
     private void PinToDesktop()

@@ -7,6 +7,10 @@ public class KennelDefinition
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
+    // Last saved desktop position. null = not yet positioned (use default offset).
+    public double? Left { get; set; }
+    public double? Top  { get; set; }
+
     // Paths are to copied shortcut files stored under AppData for portability.
     public List<ShortcutDefinition> Shortcuts { get; set; } = new();
 }
