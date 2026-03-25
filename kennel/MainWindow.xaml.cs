@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace kennel;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
     private readonly KennelStorage _storage = new();
@@ -19,38 +17,100 @@ public partial class MainWindow : Window
 
         _kennels = _storage.LoadKennels();
         for (var i = 0; i < _kennels.Count; i++)
-        {
             CreateKennelWindowIfNeeded(_kennels[i], i);
-        }
+
+        RefreshList();
     }
+
+    // ── list item view model ──────────────────────────────────────────────────
+
+    private sealed class KennelRow
+    {
+        public required string Id               { get; init; }
+        public required string Name             { get; init; }
+        public required string ShortcutCountLabel { get; init; }
+    }
+
+    private void RefreshList()
+    {
+        var rows = new List<KennelRow>();
+        foreach (var k in _kennels)
+        {
+            var count = k.Shortcuts.Count;
+            rows.Add(new KennelRow
+            {
+                Id   = k.Id,
+                Name = k.Name,
+                ShortcutCountLabel = count == 0 ? "empty"
+                                   : count == 1 ? "1 item"
+                                   : $"{count} items"
+            });
+        }
+
+        KennelListView.ItemsSource = rows;
+        EmptyLabel.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // ── add ──────────────────────────────────────────────────────────────────
 
     private void AddKennelButton_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new KennelNameDialog
-        {
-            Owner = this
-        };
-
+        var dlg = new KennelNameDialog { Owner = this };
         if (dlg.ShowDialog() != true)
             return;
 
-        var kennelName = dlg.KennelName?.Trim();
-        if (string.IsNullOrWhiteSpace(kennelName))
+        var name = dlg.KennelName?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
             return;
 
-        // Keep windows manageable by offsetting new kennels slightly.
-        var offsetIndex = _kennels.Count;
         var kennel = new KennelDefinition
         {
-            Id = Guid.NewGuid().ToString("N"),
-            Name = kennelName,
+            Id   = Guid.NewGuid().ToString("N"),
+            Name = name
         };
 
         _kennels.Add(kennel);
         _storage.SaveKennels(_kennels);
 
-        CreateKennelWindowIfNeeded(kennel, offsetIndex);
+        CreateKennelWindowIfNeeded(kennel, _kennels.Count - 1);
+        RefreshList();
     }
+
+    // ── delete ───────────────────────────────────────────────────────────────
+
+    private void DeleteKennel_Click(object sender, RoutedEventArgs e)
+    {
+        var id = (sender as Button)?.Tag as string;
+        if (string.IsNullOrEmpty(id))
+            return;
+
+        var kennel = _kennels.Find(k => k.Id == id);
+        if (kennel is null)
+            return;
+
+        var result = MessageBox.Show(
+            $"Delete kennel \"{kennel.Name}\"?\n\nThis will remove it from your desktop and clear its saved shortcuts.",
+            "Delete Kennel",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        // Close the desktop window if it's open.
+        if (_kennelWindows.TryGetValue(id, out var window))
+        {
+            window.Closed -= null; // prevent the Closed handler re-running cleanup
+            window.Close();
+            _kennelWindows.Remove(id);
+        }
+
+        _kennels.Remove(kennel);
+        _storage.SaveKennels(_kennels);
+        RefreshList();
+    }
+
+    // ── kennel window lifecycle ───────────────────────────────────────────────
 
     private void CreateKennelWindowIfNeeded(KennelDefinition kennel, int offsetIndex = -1)
     {
@@ -63,16 +123,13 @@ public partial class MainWindow : Window
         var workArea = SystemParameters.WorkArea;
 
         double left, top;
-
         if (kennel.Left.HasValue && kennel.Top.HasValue)
         {
-            // Restore saved position, clamping back onto the screen in case resolution changed.
             left = Math.Max(workArea.Left, Math.Min(kennel.Left.Value, workArea.Left + workArea.Width  - KennelWindow.CollapsedWidth));
             top  = Math.Max(workArea.Top,  Math.Min(kennel.Top.Value,  workArea.Top  + workArea.Height - KennelWindow.CollapsedHeight));
         }
         else
         {
-            // First-time placement: stagger new kennels so they don't stack on top of each other.
             var baseLeft = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 25);
             var baseTop  = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 20);
             left = workArea.Left + Math.Min(baseLeft, workArea.Width  - KennelWindow.ExpandedWidth);
@@ -85,10 +142,10 @@ public partial class MainWindow : Window
             Top  = top
         };
 
-        kennelWindow.KennelUpdated += (_, updated) =>
+        kennelWindow.KennelUpdated += (_, _) =>
         {
-            // `updated` is the same instance as `kennel` for our in-memory list.
             _storage.SaveKennels(_kennels);
+            RefreshList();
         };
 
         kennelWindow.Closed += (_, _) =>

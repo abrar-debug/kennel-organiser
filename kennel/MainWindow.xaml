@@ -6,46 +6,99 @@
         xmlns:local="clr-namespace:kennel"
         mc:Ignorable="d"
         Title="Kennel Organiser"
-        Height="320"
-        Width="520"
+        Height="400"
+        Width="420"
+        ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
-    <Grid Margin="16">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Top bar -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <!-- Window heading -->
-            <TextBlock
-                DockPanel.Dock="Left"
-                Text="Kennel Organiser"
-                FontSize="22"
-                FontWeight="SemiBold" />
+        <!-- Heading -->
+        <TextBlock Grid.Row="0"
+                   Text="Kennel Organiser"
+                   FontSize="20"
+                   FontWeight="SemiBold" />
 
-            <Button
-                x:Name="AddKennelButton"
-                DockPanel.Dock="Right"
-                Content="Add"
-                Width="90"
-                Height="32"
-                Margin="12,0,0,0"
-                Click="AddKennelButton_Click" />
-        </DockPanel>
+        <!-- Kennel list -->
+        <Border Grid.Row="2"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="#22000000"
+                Background="#08000000">
+            <Grid>
+                <!-- Empty state -->
+                <TextBlock x:Name="EmptyLabel"
+                           Margin="16"
+                           Foreground="#88000000"
+                           FontSize="13"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Text="No kennels yet. Click Add to create one."
+                           Visibility="Collapsed" />
 
-        <!-- Placeholder area for the organisation blocks -->
-        <Border
-            Grid.Row="1"
-            CornerRadius="10"
-            BorderThickness="1"
-            BorderBrush="#33000000"
-            Background="#11000000">
-            <TextBlock
-                Margin="14"
-                Foreground="#99000000"
-                TextWrapping="Wrap"
-                Text="Click &quot;Add&quot; to create a Kennel window on your desktop. Drag app shortcuts (.lnk) into a kennel to assign them." />
+                <!-- List -->
+                <ListView x:Name="KennelListView"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          SelectionMode="Single">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="12,10"
+                                    BorderBrush="#11000000"
+                                    BorderThickness="0,0,0,1">
+                                <DockPanel LastChildFill="True">
+                                    <!-- Delete button -->
+                                    <Button DockPanel.Dock="Right"
+                                            Content="Delete"
+                                            Width="64"
+                                            Height="26"
+                                            FontSize="12"
+                                            Tag="{Binding Id}"
+                                            Click="DeleteKennel_Click" />
+
+                                    <!-- Shortcut count badge -->
+                                    <TextBlock DockPanel.Dock="Right"
+                                               Margin="0,0,10,0"
+                                               Foreground="#66000000"
+                                               FontSize="12"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding ShortcutCountLabel}" />
+
+                                    <!-- Kennel name -->
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
         </Border>
+
+        <!-- Add button -->
+        <Button Grid.Row="4"
+                x:Name="AddKennelButton"
+                Content="+ Add Kennel"
+                Height="34"
+                FontSize="13"
+                HorizontalAlignment="Stretch"
+                Click="AddKennelButton_Click" />
     </Grid>
 </Window>
