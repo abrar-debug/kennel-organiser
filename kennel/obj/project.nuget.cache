@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "/chCgS0Fhc4=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\hoque\\OneDrive\\Desktop\\Personal Projects\\kennel-organiser\\kennel\\kennel.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hoque\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.1\\communitytoolkit.mvvm.8.4.1.nupkg.sha512",
+    "C:\\Users\\hoque\\.nuget\\packages\\modernwpfui\\0.9.6\\modernwpfui.0.9.6.nupkg.sha512",
+    "C:\\Users\\hoque\\.nuget\\packages\\system.io.pipelines\\10.0.5\\system.io.pipelines.10.0.5.nupkg.sha512",
+    "C:\\Users\\hoque\\.nuget\\packages\\system.text.encodings.web\\10.0.5\\system.text.encodings.web.10.0.5.nupkg.sha512",
+    "C:\\Users\\hoque\\.nuget\\packages\\system.text.json\\10.0.5\\system.text.json.10.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}
