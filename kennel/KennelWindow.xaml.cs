@@ -14,6 +14,29 @@ using System.Runtime.InteropServices;
 
 namespace kennel;
 
+file static class Win32
+{
+    public static readonly IntPtr HWND_BOTTOM   = new(1);
+    public const uint SWP_NOMOVE     = 0x0002;
+    public const uint SWP_NOSIZE     = 0x0001;
+    public const uint SWP_NOACTIVATE = 0x0010;
+    public const int  WM_WINDOWPOSCHANGING = 0x0046;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WINDOWPOS
+    {
+        public IntPtr hwnd;
+        public IntPtr hwndInsertAfter;
+        public int    x, y, cx, cy;
+        public uint   flags;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetWindowPos(
+        IntPtr hWnd, IntPtr hWndInsertAfter,
+        int X, int Y, int cx, int cy, uint uFlags);
+}
+
 public partial class KennelWindow : Window
 {
     public static double CollapsedWidth { get; } = 96;
@@ -44,6 +67,34 @@ public partial class KennelWindow : Window
         KennelNameExpandedText.Text = _kennel.Name;
         RefreshList();
         SetCollapsed(true);
+
+        // Pin to desktop Z-order once the HWND is available.
+        Loaded += (_, _) => PinToDesktop();
+    }
+
+    private void PinToDesktop()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+
+        // Push below all normal windows but above the desktop wallpaper.
+        Win32.SetWindowPos(hwnd, Win32.HWND_BOTTOM, 0, 0, 0, 0,
+            Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
+
+        // Hook WndProc to keep it at the bottom whenever Windows tries to reorder it.
+        HwndSource.FromHwnd(hwnd)?.AddHook(DesktopWndProc);
+    }
+
+    private IntPtr DesktopWndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == Win32.WM_WINDOWPOSCHANGING)
+        {
+            // Force insert-after to HWND_BOTTOM so the window can never rise above normal apps.
+            var pos = Marshal.PtrToStructure<Win32.WINDOWPOS>(lParam);
+            pos.hwndInsertAfter = Win32.HWND_BOTTOM;
+            pos.flags |= Win32.SWP_NOACTIVATE;
+            Marshal.StructureToPtr(pos, lParam, false);
+        }
+        return IntPtr.Zero;
     }
 
     private sealed class ShortcutItem
