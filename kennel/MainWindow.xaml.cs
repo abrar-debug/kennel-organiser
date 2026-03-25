@@ -65,15 +65,13 @@ public partial class MainWindow : Window
         var baseTop = 60 + (offsetIndex < 0 ? 0 : offsetIndex * 20);
 
         // If a kennel was added previously, clamp positions into a reasonable range.
-        var left = Math.Min(baseLeft, workArea.Width - 260);
-        var top = Math.Min(baseTop, workArea.Height - 240);
+        var left = Math.Min(baseLeft, workArea.Width - KennelWindow.ExpandedWidth);
+        var top = Math.Min(baseTop, workArea.Height - KennelWindow.ExpandedHeight);
 
         var kennelWindow = new KennelWindow(kennel, _storage)
         {
             Left = workArea.Left + left,
-            Top = workArea.Top + top,
-            Width = 260,
-            Height = 240
+            Top = workArea.Top + top
         };
 
         kennelWindow.KennelUpdated += (_, updated) =>

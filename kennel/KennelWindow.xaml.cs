@@ -13,10 +13,20 @@ namespace kennel;
 
 public partial class KennelWindow : Window
 {
+    public static double CollapsedWidth { get; } = 96;
+    public static double CollapsedHeight { get; } = 96;
+    public static double ExpandedWidth { get; } = 260;
+    public static double ExpandedHeight { get; } = 240;
+
     private readonly KennelDefinition _kennel;
     private readonly KennelStorage _storage;
 
     public event EventHandler<KennelDefinition>? KennelUpdated;
+
+    private bool _isCollapsed = true;
+    private bool _headerMouseDown;
+    private Point _headerDownPos;
+    private bool _headerIsDragging;
 
     public KennelWindow(KennelDefinition kennel, KennelStorage storage)
     {
@@ -27,6 +37,7 @@ public partial class KennelWindow : Window
 
         KennelNameText.Text = _kennel.Name;
         RefreshList();
+        SetCollapsed(true);
     }
 
     private void RefreshList()
@@ -34,7 +45,9 @@ public partial class KennelWindow : Window
         ShortcutsList.ItemsSource = null;
         ShortcutsList.ItemsSource = _kennel.Shortcuts;
 
-        EmptyHintText.Visibility = _kennel.Shortcuts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        EmptyHintText.Visibility = _isCollapsed
+            ? Visibility.Collapsed
+            : (_kennel.Shortcuts.Count == 0 ? Visibility.Visible : Visibility.Collapsed);
     }
 
     private bool TryGetShortcutFiles(DragEventArgs e, out string[] filePaths)
@@ -79,6 +92,10 @@ public partial class KennelWindow : Window
         // If it includes any `.lnk` we show the kennel as an active drop target.
         if (filePaths.Any(p => string.Equals(Path.GetExtension(p), ".lnk", StringComparison.OrdinalIgnoreCase)))
         {
+            // Expand so users can see the contents while dropping.
+            if (_isCollapsed)
+                SetCollapsed(false);
+
             RootBorder.Background = new SolidColorBrush(Color.FromArgb(0x33, 0x00, 0x00, 0x00));
             RootBorder.BorderBrush = new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0x00, 0x00));
         }
@@ -142,12 +159,76 @@ public partial class KennelWindow : Window
         e.Handled = true;
     }
 
+    private void SetCollapsed(bool collapsed)
+    {
+        _isCollapsed = collapsed;
+
+        Width = collapsed ? CollapsedWidth : ExpandedWidth;
+        Height = collapsed ? CollapsedHeight : ExpandedHeight;
+
+        // Collapse the content row entirely.
+        if (KennelLayoutGrid.RowDefinitions.Count >= 2)
+        {
+            KennelLayoutGrid.RowDefinitions[1].Height = collapsed
+                ? new GridLength(0)
+                : new GridLength(1, GridUnitType.Star);
+        }
+
+        ShortcutsList.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
+        DropHintText.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
+
+        // Make the header fully rounded when collapsed like a desktop icon.
+        HeaderBorder.CornerRadius = collapsed ? new CornerRadius(12) : new CornerRadius(12, 12, 0, 0);
+
+        RefreshList();
+    }
+
     private void HeaderBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ButtonState == MouseButtonState.Pressed)
+        _headerMouseDown = true;
+        _headerIsDragging = false;
+        _headerDownPos = e.GetPosition(this);
+    }
+
+    private void HeaderBorder_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_headerMouseDown)
+            return;
+
+        if (e.LeftButton != MouseButtonState.Pressed)
+            return;
+
+        var pos = e.GetPosition(this);
+        var movedX = Math.Abs(pos.X - _headerDownPos.X);
+        var movedY = Math.Abs(pos.Y - _headerDownPos.Y);
+
+        // Only initiate a move if the user actually drags (prevents click-to-toggle confusion).
+        if (!_headerIsDragging && (movedX > 4 || movedY > 4))
         {
-            DragMove();
+            _headerIsDragging = true;
+            try
+            {
+                DragMove();
+            }
+            catch
+            {
+                // DragMove can throw if the drag is interrupted; ignore.
+            }
         }
+    }
+
+    private void HeaderBorder_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_headerMouseDown)
+            return;
+
+        _headerMouseDown = false;
+
+        // If we started a drag, don't toggle.
+        if (_headerIsDragging)
+            return;
+
+        SetCollapsed(!_isCollapsed);
     }
 
     private void ShortcutsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)

@@ -9,8 +9,8 @@
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
         x:Name="KennelRoot"
-        Width="260"
-        Height="240"
+        Width="96"
+        Height="96"
         AllowDrop="True"
         DragEnter="KennelWindow_DragEnter"
         DragLeave="KennelWindow_DragLeave"
@@ -20,7 +20,7 @@
             Background="#22000000"
             BorderBrush="#33000000"
             BorderThickness="1">
-        <Grid>
+        <Grid x:Name="KennelLayoutGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -34,15 +34,20 @@
                     BorderThickness="0,0,0,1"
                     Padding="8"
                     CornerRadius="12,12,0,0"
-                    MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown">
+                    MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown"
+                    MouseMove="HeaderBorder_MouseMove"
+                    MouseLeftButtonUp="HeaderBorder_MouseLeftButtonUp">
                 <DockPanel LastChildFill="True">
                     <TextBlock x:Name="KennelNameText"
                                DockPanel.Dock="Left"
                                Foreground="White"
                                FontWeight="SemiBold"
-                               Text="Kennel" />
+                               Text="Kennel"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
 
-                    <TextBlock DockPanel.Dock="Right"
+                    <TextBlock x:Name="DropHintText"
+                               DockPanel.Dock="Right"
                                Foreground="#66FFFFFF"
                                FontSize="11"
                                Text=".lnk drop" />
