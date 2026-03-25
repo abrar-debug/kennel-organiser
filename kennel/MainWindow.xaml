@@ -15,13 +15,24 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Window heading -->
-        <TextBlock
-            Grid.Row="0"
-            Text="Kennel Organiser"
-            FontSize="22"
-            FontWeight="SemiBold"
-            Margin="0,0,0,12" />
+        <!-- Top bar -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <!-- Window heading -->
+            <TextBlock
+                DockPanel.Dock="Left"
+                Text="Kennel Organiser"
+                FontSize="22"
+                FontWeight="SemiBold" />
+
+            <Button
+                x:Name="AddKennelButton"
+                DockPanel.Dock="Right"
+                Content="Add"
+                Width="90"
+                Height="32"
+                Margin="12,0,0,0"
+                Click="AddKennelButton_Click" />
+        </DockPanel>
 
         <!-- Placeholder area for the organisation blocks -->
         <Border
@@ -29,6 +40,12 @@
             CornerRadius="10"
             BorderThickness="1"
             BorderBrush="#33000000"
-            Background="#11000000" />
+            Background="#11000000">
+            <TextBlock
+                Margin="14"
+                Foreground="#99000000"
+                TextWrapping="Wrap"
+                Text="Click &quot;Add&quot; to create a Kennel window on your desktop. Drag app shortcuts (.lnk) into a kennel to assign them." />
+        </Border>
     </Grid>
 </Window>

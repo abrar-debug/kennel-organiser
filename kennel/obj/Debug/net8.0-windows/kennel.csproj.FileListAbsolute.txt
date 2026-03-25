@@ -153,3 +153,8 @@ C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\De
 C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\kennel.pdb
 C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\kennel.genruntimeconfig.cache
 C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\ref\kennel.dll
+C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\KennelNameDialog.baml
+C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\KennelWindow.baml
+C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\KennelNameDialog.g.cs
+C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\KennelWindow.g.cs
+C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\obj\Debug\net8.0-windows\kennel.sourcelink.json

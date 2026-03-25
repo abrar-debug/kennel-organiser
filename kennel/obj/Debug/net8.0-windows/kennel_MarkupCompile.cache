@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 C:\Users\hoque\OneDrive\Desktop\Personal Projects\kennel-organiser\kennel\App.xaml
-11407045341
+3615556304
 
-4346045850
+81473100779
 202301404674
-MainWindow.xaml;
+KennelNameDialog.xaml;KennelWindow.xaml;MainWindow.xaml;
 
 False
 
